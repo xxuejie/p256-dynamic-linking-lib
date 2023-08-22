@@ -1,0 +1,19 @@
+[package]
+name = "runner"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ckb-hash = "0.109.0"
+ckb-script = "0.109.0"
+ckb-types = "0.109.0"
+p256 = { git = "https://github.com/RustCrypto/elliptic-curves.git", default-features = false, features = ["arithmetic", "ecdsa", "alloc"] }
+lazy_static = "1.4.0"
+rand = "0.8.5"
+
+[dev-dependencies]
+proptest = "1.0.0"
+ckb-mock-tx-types = "0.109.0"
+serde_json = "1.0.105"
