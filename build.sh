@@ -2,7 +2,6 @@
 set -ex
 
 AR="${AR:-llvm-ar-16}"
-OBJCOPY="${OBJCOPY:-llvm-objcopy-16}"
 LD="${LD:-ld.lld-16}"
 STRIP="${STRIP:-llvm-strip-16}"
 

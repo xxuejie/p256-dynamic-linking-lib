@@ -16,7 +16,7 @@ use rand::{rngs::StdRng, thread_rng, SeedableRng};
 use std::sync::Arc;
 
 lazy_static! {
-    pub static ref P256_BIN: Bytes = Bytes::from(std::fs::read("../../p256.so").expect("read"));
+    pub static ref P256_BIN: Bytes = Bytes::from(std::fs::read("../../p256-striped.so").expect("read"));
     pub static ref TEST_BIN: Bytes = Bytes::from(std::fs::read("../test").expect("read"));
 }
 
@@ -158,5 +158,42 @@ proptest! {
         // });
 
         verifier.verify(10_000_000).expect("success");
+    }
+
+    #[test]
+    fn test_invalid_signature(seed: u64, flip_bit in 0..256usize) {
+        let mut rng = StdRng::seed_from_u64(seed);
+
+        let signing_key = SigningKey::random(&mut rng);
+        let public_key = signing_key.verifying_key();
+        let public_key_bytes = public_key.to_sec1_bytes();
+
+        let mut message = [0u8; 32];
+        rng.fill_bytes(&mut message[..]);
+
+        let (signature, _) = signing_key.try_sign(&message).expect("sign");
+
+        message[flip_bit / 8] ^= 1 << (flip_bit % 8);
+
+        let (mock_tx, resolved_tx) = build_mock_transaction(&[
+            CellOutput::calc_data_hash(&P256_BIN).as_bytes(),
+            Bytes::from(message.to_vec()),
+            Bytes::from(public_key_bytes.to_vec()),
+            Bytes::from(signature.to_vec()),
+        ]);
+
+        let resource = Resource::from_mock_tx(&mock_tx).expect("resource");
+
+        // let repr_tx: ckb_mock_tx_types::ReprMockTransaction = mock_tx.into();
+        // let json = serde_json::to_string_pretty(&repr_tx).expect("serde");
+        // std::fs::write("dump.json", json).expect("write");
+
+        let verifier = TransactionScriptsVerifier::new(Arc::new(resolved_tx), resource);
+        // verifier.set_debug_printer(move |hash: &ckb_types::packed::Byte32, message: &str| {
+        //     let prefix = format!("Script group: {:x}", hash);
+        //     eprintln!("{} DEBUG OUTPUT: {}", prefix, message);
+        // });
+
+        verifier.verify(10_000_000).expect_err("failure");
     }
 }
