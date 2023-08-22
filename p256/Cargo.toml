@@ -10,3 +10,6 @@ crate-type = ["staticlib"]
 
 [dependencies]
 p256 = { git = "https://github.com/RustCrypto/elliptic-curves.git", default-features = false, features = ["arithmetic", "ecdsa"] }
+
+[profile.release]
+lto = true
